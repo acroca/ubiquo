@@ -111,8 +111,8 @@ base_config: &base_config
     encoding: unicode
     adapter:  postgresql
     host: localhost
-    username: #{ENV['USERNAME']}
-    password: 
+    username: #{%x{id -u -n}.strip}
+    password:
 
 development:
   <<: *base_config
@@ -199,7 +199,12 @@ ActionController::Routing::Routes.draw do |map|
 
   # Ubiquo plugins routes. See routes.rb from each plugin path.
 #{ubiquo_routes}
-<%= "map.from_plugin :ubiquo_design" if opts[:gnuine] %>
+<% if @opts[:template] == :edge && @opts[:profile] == :complete %>
+  <%= "map.from_plugin :ubiquo_categories" %>
+<% end %>
+<% if opts[:gnuine] %>
+  <%= "map.from_plugin :ubiquo_design" %>
+<% end %>
   ############# default routes
   #map.connect ':controller/:action/:id'
   #map.connect ':controller/:action/:id.:format'
@@ -254,6 +259,9 @@ CODE
 ubiquo_branch = <%= @opts[:template] == :edge ? 'nil' : "'0.7-stable'" %>
 add_plugins(selected_plugins + external_plugins, :branch => ubiquo_branch, :devel => <%= @opts[:devel] ? true : false %>)
 
+<% if @opts[:template] == :edge && @opts[:profile] == :complete %>
+  add_plugins(['ubiquo_categories'], :branch => nil)
+<% end %>
 <% if @opts[:gnuine] && opts[:profile] == :complete %>
 plugin 'ubiquo_design', :git => 'gitosis@gandalf.gnuine.com:ubiquo_design.git', :submodule => true, :branch => ubiquo_branch
 <% end %>
